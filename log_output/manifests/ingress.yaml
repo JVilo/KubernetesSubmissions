@@ -4,13 +4,12 @@ metadata:
   name: log-output
 spec:
   rules:
-    - host: log-output.local
-      http:
+    - http:
         paths:
           - path: /
             pathType: Prefix
             backend:
               service:
-                name: log-output
+                name: log-output-service
                 port:
                   number: 80
