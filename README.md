@@ -8,3 +8,4 @@
 - [1.2.](https://github.com/jvilo/KubernetesSubmissions/tree/1.2/todo_app)
 - [1.3.](https://github.com/JVilo/KubernetesSubmissions/tree/1.3/log_output)
 - [1.4.](https://github.com/jvilo/KubernetesSubmissions/tree/1.4/todo_app)
+- [1.4.](https://github.com/jvilo/KubernetesSubmissions/tree/1.5/todo_app)
