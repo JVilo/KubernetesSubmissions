@@ -14,6 +14,13 @@ spec:
     spec:
       containers:
         - name: ping-pong
-          image: jvilo/ping-pong:1.9
+          image: jvilo/ping-pong:2.0
           ports:
             - containerPort: 8080
+          volumeMounts:
+            - name: shared-volume
+              mountPath: /shared
+      volumes:
+        - name: shared-volume
+          persistentVolumeClaim:
+            claimName: shared-pvc

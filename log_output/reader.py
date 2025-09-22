@@ -1,21 +1,38 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer
+import os
 
-file_path = "/shared/log.txt"
+log_file = "/shared/log.txt"
+counter_file = "/shared/counter.txt"
 
 class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
-        try:
-            with open(file_path, "rb") as f:
-                content = f.read()
+        if self.path == "/status":
+            # Read the last line from the log file
+            random_string_line = ""
+            if os.path.exists(log_file):
+                with open(log_file, "r") as f:
+                    lines = f.readlines()
+                    if lines:
+                        random_string_line = lines[-1].strip()
+
+            # Read the ping-pong counter
+            counter_value = "0"
+            if os.path.exists(counter_file):
+                with open(counter_file, "r") as f:
+                    counter_value = f.read().strip()
+
+            response = f"{random_string_line}\nPing / Pongs: {counter_value}"
+
             self.send_response(200)
-            self.send_header("Content-Type", "text/plain")
+            self.send_header("Content-type", "text/plain")
             self.end_headers()
-            self.wfile.write(content)
-        except FileNotFoundError:
-            self.send_response(500)
+            self.wfile.write(response.encode())
+        else:
+            self.send_response(404)
             self.end_headers()
-            self.wfile.write(b"Log file not found")
 
 if __name__ == "__main__":
-    port = 8080
+    port = int(os.environ.get("PORT", 8080))
+    print(f"[DEBUG] Starting server on port {port}")
     HTTPServer(("", port), Handler).serve_forever()
+

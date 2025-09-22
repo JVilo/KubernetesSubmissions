@@ -12,20 +12,21 @@ spec:
       labels:
         app: log-output
     spec:
-      volumes:
-        - name: shared-logs
-          emptyDir: {}
       containers:
         - name: writer
           image: jvilo/log-output-writer:1.0
           volumeMounts:
-            - name: shared-logs
+            - name: shared-volume
               mountPath: /shared
         - name: reader
-          image: jvilo/log-output-reader:1.0
+          image: jvilo/log-output-reader:1.11
+          imagePullPolicy: Always
           ports:
             - containerPort: 8080
           volumeMounts:
-            - name: shared-logs
+            - name: shared-volume
               mountPath: /shared
-
+      volumes:
+        - name: shared-volume
+          persistentVolumeClaim:
+            claimName: shared-pvc
