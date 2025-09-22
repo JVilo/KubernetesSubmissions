@@ -14,3 +14,4 @@
 - [1.8.](https://github.com/jvilo/KubernetesSubmissions/tree/1.8/todo_app)
 - [1.9.](https://github.com/jvilo/KubernetesSubmissions/tree/1.9/ping-pong)
 - [1.10.](https://github.com/jvilo/KubernetesSubmissions/tree/1.10/log_output)
+- [1.11.log_output ](https://github.com/jvilo/KubernetesSubmissions/tree/1.11/log_output)[1.11.ping-pong](https://github.com/jvilo/KubernetesSubmissions/tree/1.11/ping-pong)
