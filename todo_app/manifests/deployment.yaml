@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: todo-app
-          image: jvilo/todo-app:1.12
+          image: jvilo/todo-app:1.133
           ports:
             - containerPort: 8080
           env:
