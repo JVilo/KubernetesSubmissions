@@ -14,9 +14,16 @@ spec:
     spec:
       containers:
         - name: todo-app
-          image: jvilo/todo-app:1.8
+          image: jvilo/todo-app:1.12
           ports:
             - containerPort: 8080
           env:
             - name: PORT
               value: "8080"
+          volumeMounts:
+            - name: shared-volume
+              mountPath: /shared
+      volumes:
+        - name: shared-volume
+          persistentVolumeClaim:
+            claimName: shared-pvc

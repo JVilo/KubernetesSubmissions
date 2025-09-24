@@ -1,7 +1,9 @@
 FROM python:3.11-slim
 
-WORKDIR /usr/src/app
-COPY server.py .
-COPY index.html .
+WORKDIR /app
+
+COPY server.py index.html ./
+
+RUN mkdir -p /shared
 
 CMD ["python", "server.py"]
