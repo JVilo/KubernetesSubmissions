@@ -1,4 +1,9 @@
 FROM python:3.11-slim
+
 WORKDIR /app
+
 COPY writer.py .
+
+RUN mkdir -p /shared
+
 CMD ["python", "writer.py"]

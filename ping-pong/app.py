@@ -1,30 +1,25 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import os
 
-counter_file = "/shared/counter.txt"
-
-# make sure file exists
-if not os.path.exists(counter_file):
-    with open(counter_file, "w") as f:
-        f.write("0")
+counter = 0
 
 class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
+        global counter
         if self.path == "/pingpong":
-            # read counter
-            with open(counter_file, "r") as f:
-                count = int(f.read().strip())
-            count += 1
-            with open(counter_file, "w") as f:
-                f.write(str(count))
-
+            counter += 1
             self.send_response(200)
             self.end_headers()
-            self.wfile.write(f"pong {count}".encode())
+            self.wfile.write(f"pong {counter}".encode())
+        elif self.path == "/pings":  # new endpoint for Log-output
+            self.send_response(200)
+            self.end_headers()
+            self.wfile.write(str(counter).encode())
         else:
             self.send_response(404)
             self.end_headers()
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
+    print(f"Server running on port {port}")
     HTTPServer(("", port), Handler).serve_forever()
