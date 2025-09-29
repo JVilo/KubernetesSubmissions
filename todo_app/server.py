@@ -3,6 +3,8 @@ import sys
 import urllib.request
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from datetime import datetime, timedelta
+import json
+import requests
 
 port = int(os.environ.get("PORT", 8080))
 
@@ -10,10 +12,12 @@ IMAGE_DIR = "/shared"
 IMAGE_PATH = os.path.join(IMAGE_DIR, "image.jpg")
 TIMESTAMP_PATH = os.path.join(IMAGE_DIR, "timestamp.txt")
 
+TODO_BACKEND = "http://todo-backend-service/api/todos"
+
 os.makedirs(IMAGE_DIR, exist_ok=True)
 
 def fetch_new_image():
-    urllib.request.urlretrieve("https://picsum.photos/1200", IMAGE_PATH)
+    urllib.request.urlretrieve("https://picsum.photos/600", IMAGE_PATH)
     with open(TIMESTAMP_PATH, "w") as f:
         f.write(datetime.utcnow().isoformat())
     sys.stdout.flush()
@@ -46,6 +50,24 @@ class Handler(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(img)
 
+        elif self.path == "/api/todos":  # proxy GET
+            resp = requests.get(TODO_BACKEND)
+            self.send_response(resp.status_code)
+            self.end_headers()
+            self.wfile.write(resp.content)
+
+        else:
+            self.send_response(404)
+            self.end_headers()
+
+    def do_POST(self):
+        if self.path == "/api/todos":
+            length = int(self.headers.get("Content-Length"))
+            data = self.rfile.read(length)
+            resp = requests.post(TODO_BACKEND, data=data, headers={"Content-Type": "application/json"})
+            self.send_response(resp.status_code)
+            self.end_headers()
+            self.wfile.write(resp.content)
         else:
             self.send_response(404)
             self.end_headers()
@@ -53,3 +75,4 @@ class Handler(BaseHTTPRequestHandler):
 print(f"Server started in port {port}")
 sys.stdout.flush()
 HTTPServer(("", port), Handler).serve_forever()
+

@@ -4,7 +4,7 @@ metadata:
   name: todo-app
 spec:
   rules:
-    - host: todo-app.local
+    - host: todo-app.127.0.0.1.nip.io
       http:
         paths:
           - path: /
@@ -12,5 +12,12 @@ spec:
             backend:
               service:
                 name: todo-app-service
+                port:
+                  number: 80
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: todo-backend-service
                 port:
                   number: 80

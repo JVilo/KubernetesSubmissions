@@ -7,12 +7,40 @@
 <h1>Hello from todo-app!</h1>
 <img src="/image" alt="Random Image" style="max-width: 600px; height: auto;"><br><br>
 
-<input type="text" id="todo" name="todo" maxlength="140">
-<button type="button">Create Todo</button>
-<ul>
-  <li>Vacuum</li>
-  <li>Pet the cat</li>
-  <li>Make a pie</li>
-</ul>
+<input type="text" id="todoInput" maxlength="140">
+<button onclick="createTodo()">Create Todo</button>
+
+<ul id="todoList"></ul>
+
+<script>
+  async function fetchTodos() {
+    const res = await fetch('/api/todos');
+    const todos = await res.json();
+    const list = document.getElementById('todoList');
+    list.innerHTML = '';
+    todos.forEach(todo => {
+      const li = document.createElement('li');
+      li.textContent = todo;
+      list.appendChild(li);
+    });
+  }
+
+  async function createTodo() {
+    const input = document.getElementById('todoInput');
+    const todo = input.value.trim();
+    if (!todo) return;
+
+    await fetch('/api/todos', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ todo })
+    });
+
+    input.value = '';
+    fetchTodos();
+  }
+
+  fetchTodos();
+</script>
 </body>
 </html>
