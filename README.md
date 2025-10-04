@@ -23,3 +23,4 @@
 - [2.1.log_output ](https://github.com/jvilo/KubernetesSubmissions/tree/2.1/log_output)[2.1.ping-pong](https://github.com/jvilo/KubernetesSubmissions/tree/2.1/ping-pong)
 - [2.2.](https://github.com/jvilo/KubernetesSubmissions/tree/2.2/todo_app)
 - [2.3.log_output ](https://github.com/jvilo/KubernetesSubmissions/tree/2.3/log_output)[2.3.ping-pong](https://github.com/jvilo/KubernetesSubmissions/tree/2.3/ping-pong)
+- [2.4.](https://github.com/jvilo/KubernetesSubmissions/tree/2.4/todo_app)

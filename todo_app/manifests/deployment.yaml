@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: todo-app
+  namespace: project
 spec:
   replicas: 1
   selector:
@@ -20,10 +21,3 @@ spec:
           env:
             - name: PORT
               value: "8080"
-          volumeMounts:
-            - name: shared-volume
-              mountPath: /shared
-      volumes:
-        - name: shared-volume
-          persistentVolumeClaim:
-            claimName: shared-pvc
