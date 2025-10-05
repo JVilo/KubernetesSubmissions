@@ -9,6 +9,14 @@ startup_timestamp = datetime.now(timezone.utc).isoformat(timespec="milliseconds"
 
 PING_PONG_URL = os.environ.get("PING_PONG_URL", "http://ping-pong-service/pings")
 
+MESSAGE = os.environ.get("MESSAGE", "no message set")
+
+FILE_PATH = "/config/information.txt"
+file_content = "file not found"
+if os.path.exists(FILE_PATH):
+    with open(FILE_PATH, "r") as f:
+        file_content = f.read().strip()
+
 class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         if self.path == "/status":
@@ -19,7 +27,12 @@ class Handler(BaseHTTPRequestHandler):
             except Exception as e:
                 pong_count = f"Error: {e}"
 
-            response = f"{startup_timestamp}: {random_string}\nPing / Pongs: {pong_count}"
+            response = (
+                f"file content: {file_content}\n"
+                f"env variable: MESSAGE={MESSAGE}\n"
+                f"{startup_timestamp}: {random_string}\n"
+                f"Ping / Pongs: {pong_count}"
+            )
             self.send_response(200)
             self.end_headers()
             self.wfile.write(response.encode())
