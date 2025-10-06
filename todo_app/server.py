@@ -12,7 +12,7 @@ IMAGE_DIR = "/shared"
 IMAGE_PATH = os.path.join(IMAGE_DIR, "image.jpg")
 TIMESTAMP_PATH = os.path.join(IMAGE_DIR, "timestamp.txt")
 
-TODO_BACKEND = "http://todo-backend-service/api/todos"
+TODO_BACKEND = os.environ.get("BACKEND_URL", "http://todo-backend-service/api/todos")
 
 os.makedirs(IMAGE_DIR, exist_ok=True)
 
@@ -50,7 +50,7 @@ class Handler(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(img)
 
-        elif self.path == "/api/todos":  # proxy GET
+        elif self.path == "/api/todos":  # Proxy GET to backend
             resp = requests.get(TODO_BACKEND)
             self.send_response(resp.status_code)
             self.end_headers()
@@ -61,7 +61,7 @@ class Handler(BaseHTTPRequestHandler):
             self.end_headers()
 
     def do_POST(self):
-        if self.path == "/api/todos":
+        if self.path == "/api/todos":  # Proxy POST to backend
             length = int(self.headers.get("Content-Length"))
             data = self.rfile.read(length)
             resp = requests.post(TODO_BACKEND, data=data, headers={"Content-Type": "application/json"})
@@ -75,4 +75,5 @@ class Handler(BaseHTTPRequestHandler):
 print(f"Server started in port {port}")
 sys.stdout.flush()
 HTTPServer(("", port), Handler).serve_forever()
+
 

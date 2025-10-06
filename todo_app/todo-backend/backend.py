@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify
+import os
 
 app = Flask(__name__)
 todos = []
@@ -19,4 +20,5 @@ def add_todo():
     return jsonify({"success": True, "todo": todo}), 201
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8080)
+    port = int(os.environ.get("PORT", 8080))  # default 8080 if not set
+    app.run(host="0.0.0.0", port=port)

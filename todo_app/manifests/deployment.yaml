@@ -15,9 +15,17 @@ spec:
     spec:
       containers:
         - name: todo-app
-          image: jvilo/todo-app:2.22
+          image: jvilo/todo-app:2.66
           ports:
             - containerPort: 8080
           env:
+            - name: BACKEND_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: todo-app-config
+                  key: BACKEND_URL
             - name: PORT
-              value: "8080"
+              valueFrom:
+                configMapKeyRef:
+                  name: todo-app-config
+                  key: PORT
