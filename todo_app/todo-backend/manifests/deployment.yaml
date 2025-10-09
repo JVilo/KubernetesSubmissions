@@ -2,10 +2,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: todo-backend
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: todo-backend
   namespace: project
 spec:
   replicas: 1
@@ -19,15 +15,14 @@ spec:
     spec:
       containers:
         - name: todo-backend
-          image: jvilo/todo-backend:2.6
+          image: jvilo/todo-backend:2.8
           ports:
             - containerPort: 8080
-          env:
-            - name: PORT
-              valueFrom:
-                configMapKeyRef:
-                  name: todo-backend-config
-                  key: PORT
+          envFrom:
+            - configMapRef:
+                name: todo-db-config
+            - secretRef:
+                name: todo-db-secret
 ---
 apiVersion: v1
 kind: Service
@@ -40,4 +35,3 @@ spec:
   ports:
     - port: 80
       targetPort: 8080
-
