@@ -1,6 +1,10 @@
 from flask import Flask, request, jsonify
 import psycopg2
+import logging
 import os
+
+# Configure logging to stdout (required for Promtail/Loki)
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 app = Flask(__name__)
 
@@ -19,6 +23,7 @@ def get_conn():
         password=DB_PASSWORD
     )
 
+# Initialize DB (create table if not exists)
 with get_conn() as conn:
     with conn.cursor() as cur:
         cur.execute("""
@@ -41,17 +46,28 @@ def get_todos():
 def add_todo():
     data = request.get_json()
     todo = data.get("todo", "").strip()
+
+    # Log incoming request
+    logging.info(f"Received new todo: {todo}")
+
     if not todo:
+        logging.warning("Rejected empty todo.")
         return jsonify({"error": "Todo cannot be empty"}), 400
+
     if len(todo) > 140:
+        logging.warning(f"Rejected todo exceeding 140 characters: {todo}")
         return jsonify({"error": "Todo too long"}), 400
+
     with get_conn() as conn:
         with conn.cursor() as cur:
             cur.execute("INSERT INTO todos (text) VALUES (%s);", (todo,))
         conn.commit()
+
+    logging.info(f"Todo added: {todo}")
     return jsonify({"success": True, "todo": todo}), 201
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port)
+
 

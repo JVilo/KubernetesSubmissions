@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: todo-backend
-          image: jvilo/todo-backend:2.8
+          image: jvilo/todo-backend:2.100
           ports:
             - containerPort: 8080
           envFrom:
