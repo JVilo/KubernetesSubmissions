@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: ping-pong
-          image: jvilo/ping-pong:2.7
+          image: jvilo/ping-pong:3.2
           ports:
             - containerPort: 8080
           envFrom:

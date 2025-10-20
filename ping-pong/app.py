@@ -49,6 +49,10 @@ def pings():
             (count,) = cur.fetchone()
     return str(count)
 
+@app.route("/")
+def index():
+    return "ping-pong running\n"
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
     print(f"Server running on port {port}")
