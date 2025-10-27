@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: todo-backend-service
+  namespace: project
+spec:
+  type: NodePort  # needed for GKE Ingress
+  selector:
+    app: todo-backend
+  ports:
+    - port: 80          # service port (used by Ingress)
+      targetPort: 8080  # matches containerPort
+      protocol: TCP
