@@ -20,7 +20,7 @@ spec:
             - containerPort: 8080
           env:
             - name: PING_PONG_URL
-              value: "http://ping-pong-service/pings"
+              value: "http://ping-pong-service/pingpong"
             - name: MESSAGE
               valueFrom:
                 configMapKeyRef:

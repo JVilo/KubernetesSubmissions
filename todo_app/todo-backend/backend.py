@@ -66,6 +66,10 @@ def add_todo():
     logging.info(f"Todo added: {todo}")
     return jsonify({"success": True, "todo": todo}), 201
 
+@app.route("/", methods=["GET"])
+def root():
+    return jsonify({"status": "ok"}), 200
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port)

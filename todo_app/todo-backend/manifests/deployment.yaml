@@ -13,9 +13,22 @@ spec:
       labels:
         app: todo-backend
     spec:
+      initContainers:
+        - name: wait-for-postgres
+          image: busybox
+          command:
+            - sh
+            - -c
+            - |
+              echo "Waiting for Postgres to be ready..."
+              until nc -z todo-postgres 5432; do
+                echo "Postgres is unavailable - sleeping"
+                sleep 2
+              done
+              echo "Postgres is up - continuing"
       containers:
         - name: todo-backend
-          image: jvilo/todo-backend:2.100
+          image: jvilo/todo-backend:3.5
           ports:
             - containerPort: 8080
           envFrom:
@@ -23,15 +36,4 @@ spec:
                 name: todo-db-config
             - secretRef:
                 name: todo-db-secret
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: todo-backend-service
-  namespace: project
-spec:
-  selector:
-    app: todo-backend
-  ports:
-    - port: 80
-      targetPort: 8080
+      restartPolicy: Always

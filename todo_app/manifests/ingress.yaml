@@ -3,22 +3,24 @@ kind: Ingress
 metadata:
   name: todo-app
   namespace: project
+  annotations:
+    kubernetes.io/ingress.class: "gce"
+    cloud.google.com/backend-config: '{"default": "todo-backend-healthcheck"}'
 spec:
   rules:
-    - host: todo-app.127.0.0.1.nip.io
-      http:
+    - http:
         paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: todo-app-service
-                port:
-                  number: 80
           - path: /api
             pathType: Prefix
             backend:
               service:
                 name: todo-backend-service
+                port:
+                  number: 80
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: todo-app-service
                 port:
                   number: 80
