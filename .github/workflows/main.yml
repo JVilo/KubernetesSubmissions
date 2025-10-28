@@ -6,14 +6,14 @@ on:
       - main  # runs whenever you push to main
 
 env:
-  PROJECT_ID: ${{ secrets.GKE_PROJECT }}
-  GKE_CLUSTER: dwk-cluster               # your GKE cluster name
-  GKE_ZONE: europe-north1-b              # adjust if needed
+  PROJECT_ID: dwk-gke-2025-476414       # your actual GCP project ID
+  GKE_CLUSTER: dwk-cluster              # your GKE cluster name
+  GKE_ZONE: europe-north1-c             # correct zone for your cluster
   REGISTRY: europe-north1-docker.pkg.dev
-  REPOSITORY: todo-app-repo              # your Artifact Registry name
-  IMAGE: todo-app                        # image name
-  SERVICE: todo-backend                  # deployment name to update
-  BRANCH: ${{ github.ref_name }}
+  REPOSITORY: todo-app-repo             # your Artifact Registry repo name
+  IMAGE: todo-app                       # image name
+  SERVICE: todo-backend                 # deployment to update
+  NAMESPACE: project                    # Kubernetes namespace
 
 jobs:
   build-publish-deploy:
@@ -27,10 +27,12 @@ jobs:
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
-          credentials_json: '${{ secrets.GKE_SA_KEY }}'
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
 
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ env.PROJECT_ID }}
 
       - name: Configure Docker to use gcloud
         run: gcloud --quiet auth configure-docker $REGISTRY
@@ -38,12 +40,12 @@ jobs:
       - name: Get GKE credentials
         uses: google-github-actions/get-gke-credentials@v2
         with:
-          cluster_name: '${{ env.GKE_CLUSTER }}'
-          location: '${{ env.GKE_ZONE }}'
-          project_id: '${{ env.PROJECT_ID }}'
+          cluster_name: ${{ env.GKE_CLUSTER }}
+          location: ${{ env.GKE_ZONE }}
+          project_id: ${{ env.PROJECT_ID }}
 
       - name: Form image tag
-        run: echo "IMAGE_TAG=$REGISTRY/$PROJECT_ID/$REPOSITORY/$IMAGE:$BRANCH-$GITHUB_SHA" >> $GITHUB_ENV
+        run: echo "IMAGE_TAG=$REGISTRY/$PROJECT_ID/$REPOSITORY/$IMAGE:${{ github.sha }}" >> $GITHUB_ENV
 
       - name: Build Docker image
         run: docker build -t $IMAGE_TAG .
@@ -56,7 +58,7 @@ jobs:
 
       - name: Deploy to GKE
         run: |
-          cd manifests
+          cd todo_app/manifests
           kustomize edit set image $REGISTRY/$PROJECT_ID/$REPOSITORY/$IMAGE=$IMAGE_TAG
           kustomize build . | kubectl apply -f -
-          kubectl rollout status deployment/$SERVICE -n project
+          kubectl rollout status deployment/$SERVICE -n $NAMESPACE
