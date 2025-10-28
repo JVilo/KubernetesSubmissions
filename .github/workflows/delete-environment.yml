@@ -1,24 +1,16 @@
-name: Cleanup environment
+name: Delete Environment on Branch Deletion
 
 on:
   delete:
-    # Only react to branch deletions
-    types: [branch]
-
-env:
-  PROJECT_ID: ${{ secrets.GKE_PROJECT }}
-  GKE_CLUSTER: dwk-cluster
-  GKE_ZONE: europe-north1-c
+    branches:
+      - '**'  # Trigger on deletion of any branch
 
 jobs:
   delete-namespace:
-    name: Delete GKE namespace
+    name: Delete GKE Namespace
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
@@ -26,23 +18,22 @@ jobs:
 
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
-        with:
-          project_id: ${{ env.PROJECT_ID }}
 
-      - name: Get GKE credentials
-        uses: google-github-actions/get-gke-credentials@v2
-        with:
-          cluster_name: ${{ env.GKE_CLUSTER }}
-          location: ${{ env.GKE_ZONE }}
-          project_id: ${{ env.PROJECT_ID }}
-
-      - name: Delete namespace
+      - name: Configure kubectl
         run: |
-          BRANCH_NAME="${{ github.ref_name }}"
-          # main branch should never be deleted
-          if [ "$BRANCH_NAME" = "main" ]; then
-            echo "Main branch; skipping namespace deletion"
-            exit 0
+          gcloud container clusters get-credentials dwk-cluster \
+            --zone europe-north1-c \
+            --project ${{ secrets.GKE_PROJECT }}
+
+      - name: Delete GKE namespace
+        run: |
+          # Get branch name from deleted ref
+          BRANCH_NAME=${GITHUB_REF#refs/heads/}
+
+          # Don't delete main branch namespace
+          if [ "$BRANCH_NAME" != "main" ]; then
+            echo "Deleting namespace $BRANCH_NAME"
+            kubectl delete namespace $BRANCH_NAME || true
+          else
+            echo "Skipping deletion of main namespace"
           fi
-          echo "Deleting namespace: $BRANCH_NAME"
-          kubectl delete namespace "$BRANCH_NAME" || echo "Namespace $BRANCH_NAME does not exist"
