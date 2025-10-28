@@ -3,7 +3,7 @@ name: Release application
 on:
   push:
     branches:
-      - '**'   # run for all branches
+      - '**'   # run for all branches (main + feature branches)
 
 env:
   PROJECT_ID: ${{ secrets.GKE_PROJECT }}
@@ -25,9 +25,10 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Authenticate to Google Cloud
+        id: auth
         uses: google-github-actions/auth@v2
         with:
-          credentials_json: '${{ secrets.GKE_SA_KEY }}'
+          credentials_json: ${{ secrets.GKE_SA_KEY }}
 
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
@@ -38,12 +39,14 @@ jobs:
       - name: Get GKE credentials
         uses: google-github-actions/get-gke-credentials@v2
         with:
-          cluster_name: '${{ env.GKE_CLUSTER }}'
-          location: '${{ env.GKE_ZONE }}'
-          project_id: '${{ env.PROJECT_ID }}'
+          cluster_name: ${{ env.GKE_CLUSTER }}
+          location: ${{ env.GKE_ZONE }}
+          project_id: ${{ env.PROJECT_ID }}
+
 
       - name: Form image tag
-        run: echo "IMAGE_TAG=$REGISTRY/$PROJECT_ID/$REPOSITORY/$IMAGE:$BRANCH-$GITHUB_SHA" >> $GITHUB_ENV
+        run: echo "IMAGE_TAG=${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.IMAGE }}:${{ env.BRANCH }}-${GITHUB_SHA}" >> $GITHUB_ENV
+
 
       - name: Build Docker image
         run: docker build -t $IMAGE_TAG ./todo_app
@@ -56,30 +59,31 @@ jobs:
 
       - name: Deploy to GKE (per-branch environment)
         run: |
-          # Get branch name as namespace (main -> project)
+          # Determine namespace (main → project)
           if [ "${{ env.BRANCH }}" = "main" ]; then
             NAMESPACE="project"
           else
             NAMESPACE="${{ env.BRANCH }}"
           fi
 
-          echo "Using namespace: $NAMESPACE"
+          echo "➡️ Using namespace: $NAMESPACE"
 
           # Ensure namespace exists
-          kubectl create namespace $NAMESPACE || true
+          kubectl get namespace $NAMESPACE || kubectl create namespace $NAMESPACE
 
-          # Switch context to that namespace
+          # Switch kubectl context
           kubectl config set-context --current --namespace=$NAMESPACE
 
-          # Move into manifests folder
+          # Move to manifests directory
           cd todo_app/manifests
 
-          # Update kustomization for this namespace and image
+          # Update image and namespace in Kustomize
           kustomize edit set namespace $NAMESPACE
           kustomize edit set image $REGISTRY/$PROJECT_ID/$REPOSITORY/$IMAGE=$IMAGE_TAG
 
-          # Apply and verify rollout
+          # Apply and verify deployment
           kustomize build . | kubectl apply -f -
           kubectl rollout status deployment/$SERVICE -n $NAMESPACE
-          kubectl get services -n $NAMESPACE -o wide
 
+          # List deployed services
+          kubectl get services -n $NAMESPACE -o wide
