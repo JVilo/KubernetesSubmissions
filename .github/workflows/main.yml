@@ -3,7 +3,7 @@ name: Release application
 on:
   push:
     branches:
-      - '**'   # run for all branches (main + feature branches)
+      - '**'   # Run for all branches
 
 env:
   PROJECT_ID: ${{ secrets.GKE_PROJECT }}
@@ -19,19 +19,21 @@ jobs:
   build-publish-deploy:
     name: Build, Publish and Deploy
     runs-on: ubuntu-latest
+    environment: project   # 👈 this tells GitHub to use Environment Secrets from "project"
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Authenticate to Google Cloud
-        id: auth
         uses: google-github-actions/auth@v2
         with:
-          credentials_json: ${{ secrets.GKE_SA_KEY }}
+          credentials_json: ${{ secrets.GCP_SA_KEY }}   # 👈 comes from Environment secrets now
 
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ secrets.GKE_PROJECT }}
 
       - name: Configure Docker to use gcloud
         run: gcloud --quiet auth configure-docker $REGISTRY
@@ -41,15 +43,14 @@ jobs:
         with:
           cluster_name: ${{ env.GKE_CLUSTER }}
           location: ${{ env.GKE_ZONE }}
-          project_id: ${{ env.PROJECT_ID }}
-
+          project_id: ${{ secrets.GKE_PROJECT }}
 
       - name: Form image tag
-        run: echo "IMAGE_TAG=${{ env.REGISTRY }}/${{ env.PROJECT_ID }}/${{ env.REPOSITORY }}/${{ env.IMAGE }}:${{ env.BRANCH }}-${GITHUB_SHA}" >> $GITHUB_ENV
-
+        run: echo "IMAGE_TAG=$REGISTRY/$PROJECT_ID/$REPOSITORY/$IMAGE:$BRANCH-$GITHUB_SHA" >> $GITHUB_ENV
 
       - name: Build Docker image
-        run: docker build -t $IMAGE_TAG ./todo_app
+        working-directory: ./todo_app
+        run: docker build -t $IMAGE_TAG .
 
       - name: Push Docker image
         run: docker push $IMAGE_TAG
@@ -59,31 +60,30 @@ jobs:
 
       - name: Deploy to GKE (per-branch environment)
         run: |
-          # Determine namespace (main → project)
+          # Use branch name as namespace, except for main
           if [ "${{ env.BRANCH }}" = "main" ]; then
             NAMESPACE="project"
           else
             NAMESPACE="${{ env.BRANCH }}"
           fi
 
-          echo "➡️ Using namespace: $NAMESPACE"
+          echo "Using namespace: $NAMESPACE"
 
           # Ensure namespace exists
-          kubectl get namespace $NAMESPACE || kubectl create namespace $NAMESPACE
+          kubectl create namespace $NAMESPACE || true
 
-          # Switch kubectl context
+          # Switch context to that namespace
           kubectl config set-context --current --namespace=$NAMESPACE
 
-          # Move to manifests directory
+          # Move into manifests folder
           cd todo_app/manifests
 
-          # Update image and namespace in Kustomize
+          # Update kustomization for this namespace and image
           kustomize edit set namespace $NAMESPACE
           kustomize edit set image $REGISTRY/$PROJECT_ID/$REPOSITORY/$IMAGE=$IMAGE_TAG
 
-          # Apply and verify deployment
+          # Apply and verify rollout
           kustomize build . | kubectl apply -f -
           kubectl rollout status deployment/$SERVICE -n $NAMESPACE
-
-          # List deployed services
           kubectl get services -n $NAMESPACE -o wide
+
