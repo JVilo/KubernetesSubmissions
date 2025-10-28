@@ -3,17 +3,17 @@ name: Release application
 on:
   push:
     branches:
-      - main  # runs whenever you push to main
+      - '**'   # run for all branches
 
 env:
-  PROJECT_ID: dwk-gke-2025-476414       # your actual GCP project ID
-  GKE_CLUSTER: dwk-cluster              # your GKE cluster name
-  GKE_ZONE: europe-north1-c             # correct zone for your cluster
+  PROJECT_ID: ${{ secrets.GKE_PROJECT }}
+  GKE_CLUSTER: dwk-cluster
+  GKE_ZONE: europe-north1-c
   REGISTRY: europe-north1-docker.pkg.dev
-  REPOSITORY: todo-repository             # your Artifact Registry repo name
-  IMAGE: todo-app                       # image name
-  SERVICE: todo-backend                 # deployment to update
-  NAMESPACE: project                    # Kubernetes namespace
+  REPOSITORY: todo-repository
+  IMAGE: todo-app
+  SERVICE: todo-backend
+  BRANCH: ${{ github.ref_name }}
 
 jobs:
   build-publish-deploy:
@@ -27,12 +27,10 @@ jobs:
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
+          credentials_json: '${{ secrets.GKE_SA_KEY }}'
 
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
-        with:
-          project_id: ${{ env.PROJECT_ID }}
 
       - name: Configure Docker to use gcloud
         run: gcloud --quiet auth configure-docker $REGISTRY
@@ -40,16 +38,15 @@ jobs:
       - name: Get GKE credentials
         uses: google-github-actions/get-gke-credentials@v2
         with:
-          cluster_name: ${{ env.GKE_CLUSTER }}
-          location: ${{ env.GKE_ZONE }}
-          project_id: ${{ env.PROJECT_ID }}
+          cluster_name: '${{ env.GKE_CLUSTER }}'
+          location: '${{ env.GKE_ZONE }}'
+          project_id: '${{ env.PROJECT_ID }}'
 
       - name: Form image tag
-        run: echo "IMAGE_TAG=$REGISTRY/$PROJECT_ID/$REPOSITORY/$IMAGE:${{ github.sha }}" >> $GITHUB_ENV
+        run: echo "IMAGE_TAG=$REGISTRY/$PROJECT_ID/$REPOSITORY/$IMAGE:$BRANCH-$GITHUB_SHA" >> $GITHUB_ENV
 
       - name: Build Docker image
-        working-directory: ./todo_app
-        run: docker build -t $IMAGE_TAG .
+        run: docker build -t $IMAGE_TAG ./todo_app
 
       - name: Push Docker image
         run: docker push $IMAGE_TAG
@@ -57,9 +54,32 @@ jobs:
       - name: Set up Kustomize
         uses: imranismail/setup-kustomize@v2.1.0
 
-      - name: Deploy to GKE
+      - name: Deploy to GKE (per-branch environment)
         run: |
+          # Get branch name as namespace (main -> project)
+          if [ "${{ env.BRANCH }}" = "main" ]; then
+            NAMESPACE="project"
+          else
+            NAMESPACE="${{ env.BRANCH }}"
+          fi
+
+          echo "Using namespace: $NAMESPACE"
+
+          # Ensure namespace exists
+          kubectl create namespace $NAMESPACE || true
+
+          # Switch context to that namespace
+          kubectl config set-context --current --namespace=$NAMESPACE
+
+          # Move into manifests folder
           cd todo_app/manifests
+
+          # Update kustomization for this namespace and image
+          kustomize edit set namespace $NAMESPACE
           kustomize edit set image $REGISTRY/$PROJECT_ID/$REPOSITORY/$IMAGE=$IMAGE_TAG
+
+          # Apply and verify rollout
           kustomize build . | kubectl apply -f -
           kubectl rollout status deployment/$SERVICE -n $NAMESPACE
+          kubectl get services -n $NAMESPACE -o wide
+
