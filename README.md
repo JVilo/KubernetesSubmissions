@@ -37,3 +37,4 @@
 - [3.2.log_output ](https://github.com/jvilo/KubernetesSubmissions/tree/3.2/log_output)[3.2.ping-pong](https://github.com/jvilo/KubernetesSubmissions/tree/3.2/ping-pong)
 - [3.3.log_output ](https://github.com/jvilo/KubernetesSubmissions/tree/3.3/log_output)[3.3.ping-pong](https://github.com/jvilo/KubernetesSubmissions/tree/3.3/ping-pong)
 - [3.5.](https://github.com/jvilo/KubernetesSubmissions/tree/3.5/todo_app)
+- [3.6.](https://github.com/jvilo/KubernetesSubmissions/tree/3.6/todo_app)
