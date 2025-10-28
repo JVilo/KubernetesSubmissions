@@ -48,6 +48,7 @@ jobs:
         run: echo "IMAGE_TAG=$REGISTRY/$PROJECT_ID/$REPOSITORY/$IMAGE:${{ github.sha }}" >> $GITHUB_ENV
 
       - name: Build Docker image
+        working-directory: ./todo_app
         run: docker build -t $IMAGE_TAG .
 
       - name: Push Docker image
