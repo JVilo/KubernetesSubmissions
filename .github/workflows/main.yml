@@ -10,7 +10,7 @@ env:
   GKE_CLUSTER: dwk-cluster              # your GKE cluster name
   GKE_ZONE: europe-north1-c             # correct zone for your cluster
   REGISTRY: europe-north1-docker.pkg.dev
-  REPOSITORY: todo-app-repo             # your Artifact Registry repo name
+  REPOSITORY: todo-repository             # your Artifact Registry repo name
   IMAGE: todo-app                       # image name
   SERVICE: todo-backend                 # deployment to update
   NAMESPACE: project                    # Kubernetes namespace
