@@ -40,4 +40,4 @@
 - [3.6.](https://github.com/jvilo/KubernetesSubmissions/tree/3.6/todo_app)
 - [3.7.](https://github.com/jvilo/KubernetesSubmissions/tree/3.7/todo_app)
 - [3.8.](https://github.com/jvilo/KubernetesSubmissions/tree/3.8/todo_app)
-- [3.9.](https://github.com/JVilo/KubernetesSubmissions/blob/3.9/todo_app/README.md#39-dbaas-vs-diy)
+- [3.9.](https://github.com/JVilo/KubernetesSubmissions/tree/3.9/todo_app)
