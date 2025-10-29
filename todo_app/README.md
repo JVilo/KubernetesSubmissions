@@ -50,4 +50,7 @@ The table below compares the two approaches across setup, maintenance, backup, c
 - [Google Cloud — Database options on GKE](https://cloud.google.com/kubernetes-engine/docs/concepts/database-options)  
 - [NetApp Blog — Managed vs Self-Managed PostgreSQL](https://www.netapp.com/blog/gcp-cvo-blg-google-cloud-postgresql-managed-or-self-managed/)  
 - [Bytebase — PostgreSQL Hosting Options in 2025](https://www.bytebase.com/blog/postgres-hosting-options-pricing-comparison/)
+- 
 
+## 3.12
+![Screenshot from 2025-10-30 00-02-50.png](../../../../Pictures/Screenshots/Screenshot%20from%202025-10-30%2000-02-50.png)
