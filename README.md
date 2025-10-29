@@ -40,7 +40,7 @@
 - [3.6.](https://github.com/jvilo/KubernetesSubmissions/tree/3.6/todo_app)
 - [3.7.](https://github.com/jvilo/KubernetesSubmissions/tree/3.7/todo_app)
 - [3.8.](https://github.com/jvilo/KubernetesSubmissions/tree/3.8/todo_app)
-- [3.9.](https://github.com/JVilo/KubernetesSubmissions/blob/63f6c6e40b1532bb42db7a1a4d7dd36660268bc0/README.md?plain=1#L44)
+- [3.9.](https://github.com/JVilo/KubernetesSubmissions/blob/63f6c6e40b1532bb42db7a1a4d7dd36660268bc0/README.md#39-dbaas-vs-diy)
     ## 3.9 DBaaS vs DIY
 
 When deploying PostgreSQL on Google Cloud, there are two main options:
