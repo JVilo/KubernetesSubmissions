@@ -53,4 +53,4 @@ The table below compares the two approaches across setup, maintenance, backup, c
 - 
 
 ## 3.12
-![Screenshot from 2025-10-30 00-02-50.png](../../../../Pictures/Screenshots/Screenshot%20from%202025-10-30%2000-02-50.png)
+![Screenshot from 2025-10-30 00-02-50.png](Screenshot%20from%202025-10-30%2000-02-50.png)
