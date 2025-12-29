@@ -28,7 +28,7 @@ spec:
               echo "Postgres is up - continuing"
       containers:
         - name: todo-backend
-          image: jvilo/todo-backend:4.22
+          image: jvilo/todo-backend:4.555
           ports:
             - containerPort: 8080
           envFrom:

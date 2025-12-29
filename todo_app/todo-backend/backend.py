@@ -3,12 +3,10 @@ import psycopg2
 import logging
 import os
 
-# Configure logging to stdout
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 app = Flask(__name__)
 
-# Database configuration
 DB_HOST = os.getenv("DB_HOST", "todo-postgres")
 DB_PORT = os.getenv("DB_PORT", "5432")
 DB_NAME = os.getenv("DB_NAME", "tododb")
@@ -24,54 +22,68 @@ def get_conn():
         password=DB_PASSWORD
     )
 
-# Initialize DB table if not exists
+# Initialize DB
 with get_conn() as conn:
     with conn.cursor() as cur:
         cur.execute("""
         CREATE TABLE IF NOT EXISTS todos (
             id SERIAL PRIMARY KEY,
-            text VARCHAR(140) NOT NULL
+            text VARCHAR(140) NOT NULL,
+            done BOOLEAN NOT NULL DEFAULT FALSE
         );
         """)
     conn.commit()
 
-# Todo API endpoints
+# Get all todos
 @app.route("/api/todos", methods=["GET"])
 def get_todos():
     with get_conn() as conn:
         with conn.cursor() as cur:
-            cur.execute("SELECT text FROM todos ORDER BY id;")
+            cur.execute("SELECT id, text, done FROM todos ORDER BY id;")
             rows = cur.fetchall()
-    return jsonify([r[0] for r in rows])
 
+    todos = [{"id": r[0], "text": r[1], "done": r[2]} for r in rows]
+    return jsonify(todos)
+
+# Add new todo
 @app.route("/api/todos", methods=["POST"])
 def add_todo():
     data = request.get_json()
     todo = data.get("todo", "").strip()
 
-    logging.info(f"Received new todo: {todo}")
-
     if not todo:
-        logging.warning("Rejected empty todo.")
         return jsonify({"error": "Todo cannot be empty"}), 400
     if len(todo) > 140:
-        logging.warning(f"Rejected todo exceeding 140 characters: {todo}")
         return jsonify({"error": "Todo too long"}), 400
 
     with get_conn() as conn:
         with conn.cursor() as cur:
-            cur.execute("INSERT INTO todos (text) VALUES (%s);", (todo,))
+            cur.execute(
+                "INSERT INTO todos (text) VALUES (%s) RETURNING id;",
+                (todo,)
+            )
+            todo_id = cur.fetchone()[0]
         conn.commit()
 
-    logging.info(f"Todo added: {todo}")
-    return jsonify({"success": True, "todo": todo}), 201
+    return jsonify({
+        "id": todo_id,
+        "text": todo,
+        "done": False
+    }), 201
 
-# Root endpoint
-@app.route("/", methods=["GET"])
-def root():
-    return jsonify({"status": "ok"}), 200
+# Mark todo as done
+@app.route("/api/todos/<int:todo_id>/done", methods=["POST"])
+def mark_done(todo_id):
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "UPDATE todos SET done = TRUE WHERE id = %s;",
+                (todo_id,)
+            )
+        conn.commit()
 
-# Readiness probe endpoint
+    return jsonify({"success": True}), 200
+
 @app.route("/ready", methods=["GET"])
 def ready():
     try:
@@ -80,10 +92,8 @@ def ready():
                 cur.execute("SELECT 1;")
         return jsonify({"status": "ready"}), 200
     except Exception as e:
-        logging.error(f"Readiness check failed: {e}")
-        return jsonify({"status": "not ready", "details": str(e)}), 503
+        return jsonify({"status": "not ready", "error": str(e)}), 503
 
-# Liveness probe endpoint
 @app.route("/healthz", methods=["GET"])
 def healthz():
     return jsonify({"status": "alive"}), 200

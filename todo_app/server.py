@@ -3,7 +3,6 @@ import sys
 import urllib.request
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from datetime import datetime, timedelta
-import json
 import requests
 
 port = int(os.environ.get("PORT", 8080))
@@ -12,7 +11,10 @@ IMAGE_DIR = "/shared"
 IMAGE_PATH = os.path.join(IMAGE_DIR, "image.jpg")
 TIMESTAMP_PATH = os.path.join(IMAGE_DIR, "timestamp.txt")
 
-TODO_BACKEND = os.environ.get("BACKEND_URL", "http://todo-backend-service/api/todos")
+TODO_BACKEND = os.environ.get(
+    "BACKEND_URL",
+    "http://todo-backend-service/api/todos"
+)
 
 os.makedirs(IMAGE_DIR, exist_ok=True)
 
@@ -50,9 +52,16 @@ class Handler(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(img)
 
-        elif self.path == "/api/todos":  # Proxy GET to backend
-            resp = requests.get(TODO_BACKEND)
+        elif self.path.startswith("/api/todos"):
+            backend_url = f"{TODO_BACKEND}{self.path[len('/api/todos'):]}"
+            resp = requests.get(backend_url)
+
             self.send_response(resp.status_code)
+
+            # ✅ Forward Content-Type so browser can parse JSON
+            content_type = resp.headers.get("Content-Type", "application/json")
+            self.send_header("Content-Type", content_type)
+
             self.end_headers()
             self.wfile.write(resp.content)
 
@@ -61,19 +70,29 @@ class Handler(BaseHTTPRequestHandler):
             self.end_headers()
 
     def do_POST(self):
-        if self.path == "/api/todos":  # Proxy POST to backend
-            length = int(self.headers.get("Content-Length"))
+        if self.path.startswith("/api/todos"):
+            length = int(self.headers.get("Content-Length", 0))
             data = self.rfile.read(length)
-            resp = requests.post(TODO_BACKEND, data=data, headers={"Content-Type": "application/json"})
+
+            backend_url = f"{TODO_BACKEND}{self.path[len('/api/todos'):]}"
+            resp = requests.post(
+                backend_url,
+                data=data,
+                headers={"Content-Type": "application/json"}
+            )
+
             self.send_response(resp.status_code)
+
+            content_type = resp.headers.get("Content-Type", "application/json")
+            self.send_header("Content-Type", content_type)
+
             self.end_headers()
             self.wfile.write(resp.content)
+
         else:
             self.send_response(404)
             self.end_headers()
 
-print(f"Server started in port {port}")
+print(f"Server started on port {port}")
 sys.stdout.flush()
 HTTPServer(("", port), Handler).serve_forever()
-
-

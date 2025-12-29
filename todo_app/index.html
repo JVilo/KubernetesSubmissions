@@ -4,24 +4,45 @@
   <title>Todo App</title>
 </head>
 <body>
+
 <h1>Hello from todo-app!</h1>
+
 <img src="/image" alt="Random Image" style="max-width: 600px; height: auto;"><br><br>
 
 <input type="text" id="todoInput" maxlength="140">
 <button onclick="createTodo()">Create Todo</button>
 
+<h2>Todo</h2>
 <ul id="todoList"></ul>
+
+<h2>Done</h2>
+<ul id="doneList"></ul>
 
 <script>
   async function fetchTodos() {
     const res = await fetch('/api/todos');
     const todos = await res.json();
-    const list = document.getElementById('todoList');
-    list.innerHTML = '';
+
+    const todoList = document.getElementById('todoList');
+    const doneList = document.getElementById('doneList');
+
+    todoList.innerHTML = '';
+    doneList.innerHTML = '';
+
     todos.forEach(todo => {
       const li = document.createElement('li');
-      li.textContent = todo;
-      list.appendChild(li);
+      li.textContent = todo.text;
+
+      if (!todo.done) {
+        const btn = document.createElement('button');
+        btn.textContent = 'Done';
+        btn.style.marginLeft = '10px';
+        btn.onclick = () => markDone(todo.id);
+        li.appendChild(btn);
+        todoList.appendChild(li);
+      } else {
+        doneList.appendChild(li);
+      }
     });
   }
 
@@ -40,8 +61,15 @@
     fetchTodos();
   }
 
+  async function markDone(id) {
+    await fetch(`/api/todos/${id}/done`, {
+      method: 'POST'
+    });
+    fetchTodos();
+  }
+
   fetchTodos();
 </script>
+
 </body>
 </html>
-<!-- test deploy -->
