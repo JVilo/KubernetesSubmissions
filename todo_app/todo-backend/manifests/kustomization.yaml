@@ -7,4 +7,4 @@ resources:
   - configmap.yaml
   - service.yaml
   - deployment.yaml
-  - backend-healthcheck.yaml
+  #- backend-healthcheck.yaml

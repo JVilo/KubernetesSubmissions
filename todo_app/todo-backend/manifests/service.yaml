@@ -4,10 +4,10 @@ metadata:
   name: todo-backend-service
   namespace: project
 spec:
-  type: NodePort  # needed for GKE Ingress
+  type: NodePort
   selector:
     app: todo-backend
   ports:
-    - port: 80          # service port (used by Ingress)
-      targetPort: 8080  # matches containerPort
+    - port: 80
+      targetPort: 8080
       protocol: TCP

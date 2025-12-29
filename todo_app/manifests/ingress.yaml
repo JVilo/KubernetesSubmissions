@@ -3,9 +3,6 @@ kind: Ingress
 metadata:
   name: todo-app
   namespace: project
-  annotations:
-    kubernetes.io/ingress.class: "gce"
-    cloud.google.com/backend-config: '{"default": "todo-backend-healthcheck"}'
 spec:
   rules:
     - http:
