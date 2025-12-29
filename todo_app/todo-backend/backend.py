@@ -3,11 +3,12 @@ import psycopg2
 import logging
 import os
 
-# Configure logging to stdout (required for Promtail/Loki)
+# Configure logging to stdout
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 app = Flask(__name__)
 
+# Database configuration
 DB_HOST = os.getenv("DB_HOST", "todo-postgres")
 DB_PORT = os.getenv("DB_PORT", "5432")
 DB_NAME = os.getenv("DB_NAME", "tododb")
@@ -23,7 +24,7 @@ def get_conn():
         password=DB_PASSWORD
     )
 
-# Initialize DB (create table if not exists)
+# Initialize DB table if not exists
 with get_conn() as conn:
     with conn.cursor() as cur:
         cur.execute("""
@@ -34,6 +35,7 @@ with get_conn() as conn:
         """)
     conn.commit()
 
+# Todo API endpoints
 @app.route("/api/todos", methods=["GET"])
 def get_todos():
     with get_conn() as conn:
@@ -47,13 +49,11 @@ def add_todo():
     data = request.get_json()
     todo = data.get("todo", "").strip()
 
-    # Log incoming request
     logging.info(f"Received new todo: {todo}")
 
     if not todo:
         logging.warning("Rejected empty todo.")
         return jsonify({"error": "Todo cannot be empty"}), 400
-
     if len(todo) > 140:
         logging.warning(f"Rejected todo exceeding 140 characters: {todo}")
         return jsonify({"error": "Todo too long"}), 400
@@ -66,12 +66,28 @@ def add_todo():
     logging.info(f"Todo added: {todo}")
     return jsonify({"success": True, "todo": todo}), 201
 
+# Root endpoint
 @app.route("/", methods=["GET"])
 def root():
     return jsonify({"status": "ok"}), 200
 
+# Readiness probe endpoint
+@app.route("/ready", methods=["GET"])
+def ready():
+    try:
+        with get_conn() as conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT 1;")
+        return jsonify({"status": "ready"}), 200
+    except Exception as e:
+        logging.error(f"Readiness check failed: {e}")
+        return jsonify({"status": "not ready", "details": str(e)}), 503
+
+# Liveness probe endpoint
+@app.route("/healthz", methods=["GET"])
+def healthz():
+    return jsonify({"status": "alive"}), 200
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port)
-
-
