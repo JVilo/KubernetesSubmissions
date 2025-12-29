@@ -47,5 +47,5 @@
 
 ### Chapter 5
 
-- 4.3. count(kube_pod_info{namespace="prometheus", created_by_kind="StatefulSet"})
+- [4.3. count(kube_pod_info{namespace="prometheus", created_by_kind="StatefulSet"})](https://github.com/JVilo/KubernetesSubmissions/blob/e6277b9b935ad4a7938b8d271a58b03a156ce046/README.md?plain=1#L50)
 - 

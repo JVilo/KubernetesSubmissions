@@ -1,88 +1,25 @@
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-  name: todo-db-backup
+  name: random-todo-generator
   namespace: project
 spec:
-  schedule: "0 2 * * *" # Runs once every 24h at 02:00 UTC
+  schedule: "0 * * * *"  # every minute for testing
   jobTemplate:
     spec:
       template:
         spec:
-          containers:
-          - name: backup
-            image: google/cloud-sdk:slim
-            env:
-              # Database connection settings
-              - name: PGHOST
-                valueFrom:
-                  configMapKeyRef:
-                    name: todo-db-config
-                    key: DB_HOST
-              - name: PGPORT
-                valueFrom:
-                  configMapKeyRef:
-                    name: todo-db-config
-                    key: DB_PORT
-              - name: PGDATABASE
-                valueFrom:
-                  configMapKeyRef:
-                    name: todo-db-config
-                    key: DB_NAME
-              - name: PGUSER
-                valueFrom:
-                  secretKeyRef:
-                    name: todo-db-secret
-                    key: DB_USER
-              - name: PGPASSWORD
-                valueFrom:
-                  secretKeyRef:
-                    name: todo-db-secret
-                    key: DB_PASSWORD
-
-              # GCS bucket name
-              - name: BUCKET_NAME
-                value: "todo-db-backups-jvilo-2025"
-
-            volumeMounts:
-              - name: gcp-key
-                mountPath: /secrets
-                readOnly: true
-
-            command:
-              - /bin/sh
-              - -c
-              - |
-                set -e
-
-                echo "Installing PostgreSQL client 16..."
-                apt-get update && \
-                apt-get install -y curl gnupg lsb-release && \
-                echo "deb http://apt.postgresql.org/pub/repos/apt/ $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list && \
-                curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor -o /etc/apt/trusted.gpg.d/pgdg.gpg && \
-                apt-get update && \
-                apt-get install -y postgresql-client-16 gzip
-
-                echo "Activating service account..."
-                export GOOGLE_APPLICATION_CREDENTIALS=/secrets/key.json && \
-                gcloud auth activate-service-account --key-file=/secrets/key.json
-
-                BACKUP_FILE=backup-$(date +%F-%H-%M).sql.gz
-                echo "Dumping database..."
-                pg_dump -h $PGHOST -U $PGUSER -d $PGDATABASE | gzip > /tmp/$BACKUP_FILE
-
-                echo "Uploading to GCS..."
-                gsutil cp /tmp/$BACKUP_FILE gs://$BUCKET_NAME/
-
-                echo "Backup complete: $BACKUP_FILE"
-
           restartPolicy: OnFailure
-
-          volumes:
-            - name: gcp-key
-              secret:
-                secretName: gcp-credentials
-
-
-
-
+          containers:
+            - name: todo-generator
+              image: alpine:3.18
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  apk add --no-cache curl bash
+                  URL=$(curl -s -I https://en.wikipedia.org/wiki/Special:Random | grep -i location | awk '{print $2}' | tr -d '\r')
+                  echo "Generated random article: $URL"
+                  curl -X POST -H "Content-Type: application/json" \
+                       -d "{\"todo\":\"Read $URL\"}" \
+                       http://todo-backend-service:80/api/todos
